@@ -1,0 +1,884 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Cloud Cost Firewall — Playground</title>
+  <style>
+    :root {
+      --bg: #090d16;
+      --card-bg: #111827;
+      --card-border: #1f2937;
+      --input-bg: #1f293d;
+      --text: #f9fafb;
+      --text-muted: #9ca3af;
+      --primary: #38bdf8;
+      --primary-hover: #0284c7;
+      --success: #10b981;
+      --warning: #f59e0b;
+      --danger: #ef4444;
+      --purple: #a855f7;
+      --blue: #3b82f6;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.5;
+      padding: 1.25rem;
+      min-height: 100vh;
+    }
+    header {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      align-items: center;
+      gap: 1rem;
+      padding-bottom: 1rem;
+      margin-bottom: 1rem;
+      border-bottom: 1px solid var(--card-border);
+    }
+    .brand { display: flex; align-items: center; gap: 0.75rem; }
+    .brand h1 { font-size: 1.4rem; font-weight: 700; color: #fff; }
+    .brand .shield { font-size: 1.5rem; }
+    .chips { display: flex; gap: 0.5rem; align-items: center; flex-wrap: wrap; }
+    .chip {
+      font-size: 0.75rem;
+      font-weight: 600;
+      padding: 0.25rem 0.65rem;
+      border-radius: 9999px;
+      background: #1f2937;
+      border: 1px solid #374151;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+    }
+    .chip .dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; }
+    .flow-bar {
+      width: 100%;
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      background: rgba(31, 41, 55, 0.45);
+      padding: 0.4rem 0.85rem;
+      border-radius: 6px;
+      margin-top: -0.25rem;
+      margin-bottom: 1.25rem;
+      text-align: center;
+      border: 1px solid rgba(255,255,255,0.06);
+    }
+    .main-grid {
+      display: grid;
+      grid-template-columns: 1.15fr 0.85fr;
+      gap: 1.25rem;
+    }
+    @media (max-width: 1024px) {
+      .main-grid { grid-template-columns: 1fr; }
+    }
+    .card {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 10px;
+      padding: 1.25rem;
+      margin-bottom: 1rem;
+    }
+    .card-title {
+      font-size: 0.95rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--text-muted);
+      margin-bottom: 0.75rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    /* Chat card */
+    .chat-container { display: flex; flex-direction: column; height: 740px; }
+    .chat-messages {
+      flex: 1;
+      overflow-y: auto;
+      padding: 0.75rem;
+      background: #0d131f;
+      border-radius: 8px;
+      margin-bottom: 0.75rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.75rem;
+      border: 1px solid #1e293b;
+    }
+    .msg { max-width: 85%; padding: 0.65rem 0.9rem; border-radius: 8px; font-size: 0.9rem; word-break: break-word; }
+    .msg-user {
+      align-self: flex-end;
+      background: #1d4ed8;
+      color: white;
+      border-bottom-right-radius: 2px;
+    }
+    .msg-ai {
+      align-self: flex-start;
+      background: #1e293b;
+      color: #e2e8f0;
+      border-bottom-left-radius: 2px;
+      border: 1px solid #334155;
+    }
+    .msg-ai .meta {
+      font-size: 0.72rem;
+      color: var(--text-muted);
+      margin-top: 0.35rem;
+      padding-top: 0.25rem;
+      border-top: 1px solid rgba(255,255,255,0.08);
+      font-family: monospace;
+    }
+    .msg-system {
+      align-self: center;
+      width: 95%;
+      background: rgba(239, 68, 68, 0.1);
+      border: 1px solid var(--danger);
+      color: #fca5a5;
+      text-align: center;
+      border-radius: 6px;
+      font-size: 0.85rem;
+    }
+    .msg-system.info {
+      background: rgba(56, 189, 248, 0.1);
+      border-color: var(--primary);
+      color: #bae6fd;
+    }
+    .chat-inputs { display: flex; flex-direction: column; gap: 0.5rem; }
+    textarea {
+      width: 100%;
+      height: 70px;
+      background: var(--input-bg);
+      border: 1px solid var(--card-border);
+      color: #fff;
+      border-radius: 6px;
+      padding: 0.6rem;
+      font-size: 0.9rem;
+      resize: vertical;
+      font-family: inherit;
+    }
+    textarea:focus, input:focus, select:focus { outline: none; border-color: var(--primary); }
+    .btn-row { display: flex; flex-wrap: wrap; gap: 0.5rem; }
+    button {
+      background: #1f2937;
+      color: var(--text);
+      border: 1px solid #374151;
+      padding: 0.45rem 0.85rem;
+      border-radius: 6px;
+      font-size: 0.82rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+    button:hover:not(:disabled) { background: #374151; border-color: #4b5563; }
+    button:disabled { opacity: 0.5; cursor: not-allowed; }
+    .btn-primary { background: #0284c7; border-color: #0369a1; color: #fff; }
+    .btn-primary:hover:not(:disabled) { background: #0369a1; }
+    .btn-danger { background: #b91c1c; border-color: #991b1b; color: #fff; }
+    .btn-success { background: #059669; border-color: #047857; color: #fff; }
+    .config-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+      gap: 0.5rem;
+      margin-top: 0.5rem;
+      font-size: 0.8rem;
+    }
+    .field label { display: block; color: var(--text-muted); font-size: 0.72rem; margin-bottom: 0.2rem; }
+    .field input, .field select {
+      width: 100%;
+      background: var(--input-bg);
+      border: 1px solid var(--card-border);
+      color: #fff;
+      border-radius: 4px;
+      padding: 0.35rem 0.5rem;
+      font-size: 0.8rem;
+    }
+    .run-badge {
+      background: rgba(56, 189, 248, 0.15);
+      border: 1px solid var(--primary);
+      color: #7dd3fc;
+      padding: 0.35rem 0.5rem;
+      border-radius: 4px;
+      font-family: monospace;
+      font-weight: 600;
+      font-size: 0.8rem;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    .checkbox-row { display: flex; gap: 1rem; align-items: center; margin-top: 0.4rem; font-size: 0.78rem; }
+    .checkbox-row label { display: flex; align-items: center; gap: 0.35rem; cursor: pointer; color: var(--text-muted); }
+    /* PAUSE box */
+    .pause-box {
+      display: none;
+      background: rgba(245, 158, 11, 0.12);
+      border: 2px solid var(--warning);
+      border-radius: 8px;
+      padding: 1rem;
+      margin-bottom: 1rem;
+      animation: pulse-border 2s infinite;
+    }
+    @keyframes pulse-border {
+      0% { border-color: var(--warning); box-shadow: 0 0 0 rgba(245, 158, 11, 0); }
+      50% { border-color: #fbbf24; box-shadow: 0 0 12px rgba(245, 158, 11, 0.4); }
+      100% { border-color: var(--warning); box-shadow: 0 0 0 rgba(245, 158, 11, 0); }
+    }
+    .pause-title { font-weight: 700; color: #fbbf24; font-size: 0.95rem; display: flex; align-items: center; gap: 0.4rem; }
+    .pause-details { margin: 0.5rem 0; font-size: 0.85rem; display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 0.5rem; }
+    /* Verdict card */
+    .badge-large {
+      display: inline-block;
+      font-size: 1.1rem;
+      font-weight: 800;
+      padding: 0.35rem 0.85rem;
+      border-radius: 6px;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin-bottom: 0.5rem;
+    }
+    .badge-ALLOW { background: rgba(16, 185, 129, 0.2); color: #34d399; border: 1px solid #059669; }
+    .badge-WARN { background: rgba(245, 158, 11, 0.2); color: #fbbf24; border: 1px solid #d97706; }
+    .badge-DOWNGRADE { background: rgba(59, 130, 246, 0.2); color: #60a5fa; border: 1px solid #2563eb; }
+    .badge-PAUSE { background: rgba(245, 158, 11, 0.25); color: #fbbf24; border: 1px solid #f59e0b; }
+    .badge-BLOCK, .badge-DENIED, .badge-TIMEOUT { background: rgba(239, 68, 68, 0.2); color: #f87171; border: 1px solid #dc2626; }
+    .badge-UPSTREAM_ERROR { background: rgba(168, 85, 247, 0.2); color: #c084fc; border: 1px solid #9333ea; }
+    .verdict-reason { font-size: 0.85rem; color: #e5e7eb; margin-bottom: 0.75rem; min-height: 1.2rem; }
+    .metrics-table { width: 100%; border-collapse: collapse; font-size: 0.8rem; margin-bottom: 0.75rem; }
+    .metrics-table td { padding: 0.3rem 0.5rem; border-bottom: 1px solid #1f2937; }
+    .metrics-table td:first-child { color: var(--text-muted); width: 40%; }
+    .metrics-table td:last-child { font-weight: 600; text-align: right; font-family: monospace; }
+    .progress-bar-bg { width: 100%; height: 10px; background: #1f2937; border-radius: 999px; overflow: hidden; margin-top: 0.4rem; }
+    .progress-bar-fill { height: 100%; width: 0%; transition: width 0.3s ease, background-color 0.3s ease; }
+    /* Counters */
+    .counters-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 0.5rem; text-align: center; margin-bottom: 0.75rem; }
+    .counter-box { background: #0f172a; padding: 0.5rem; border-radius: 6px; border: 1px solid #1e293b; }
+    .counter-val { font-size: 1.05rem; font-weight: 700; color: #fff; font-family: monospace; }
+    .counter-lbl { font-size: 0.68rem; color: var(--text-muted); text-transform: uppercase; }
+    /* Events table */
+    .events-list { max-height: 140px; overflow-y: auto; font-size: 0.75rem; font-family: monospace; display: flex; flex-direction: column; gap: 0.25rem; }
+    .event-row { display: flex; justify-content: space-between; padding: 0.2rem 0.4rem; background: #0d131f; border-radius: 4px; border-left: 3px solid transparent; }
+    /* Rules form */
+    .rules-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 0.5rem; margin-bottom: 0.75rem; }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="brand">
+      <span class="shield">🛡️</span>
+      <h1>Cloud Cost Firewall</h1>
+      <span style="font-size: 0.8rem; color: var(--text-muted); font-family: monospace;">run: <span id="display-run-id">run-init</span></span>
+    </div>
+    <div class="chips">
+      <div class="chip" id="chip-store"><span class="dot" style="background: #9ca3af;"></span> store: ...</div>
+      <div class="chip" id="chip-db"><span class="dot" style="background: #9ca3af;"></span> db: ...</div>
+      <div class="chip" id="chip-telegram"><span class="dot" style="background: #9ca3af;"></span> telegram: ...</div>
+    </div>
+  </header>
+
+  <div class="flow-bar">
+    Prompt &rarr; Cost estimate &rarr; Policy rules &rarr; Verdict &rarr; AI &rarr; Response &rarr; Real cost recorded
+  </div>
+
+  <div class="main-grid">
+    <!-- LEFT COLUMN: Chat & Controls -->
+    <div class="card chat-container">
+      <div class="card-title">
+        <span>Interactive Agent Chat</span>
+        <span style="font-size: 0.75rem; color: var(--text-muted); font-weight: normal;">Live Attributed Session</span>
+      </div>
+
+      <div class="chat-messages" id="chat-messages">
+        <div class="msg msg-system info">💡 Cloud Cost Firewall ready. Send a prompt to test policy verdicts and real cost controls.</div>
+      </div>
+
+      <div class="chat-inputs">
+        <textarea id="prompt-input" placeholder="Type prompt (Ctrl+Enter to send)...">What are the three laws of robotics?</textarea>
+
+        <div class="btn-row">
+          <button class="btn-primary" id="btn-send" onclick="sendPrompt()">Send</button>
+          <button onclick="sendSamePrompt()">Same prompt dobara</button>
+          <button onclick="runAtkaAgent()">Atka agent (8x same)</button>
+          <button onclick="fillBadaPrompt()">Bada prompt</button>
+          <button id="btn-new-run" onclick="newRun()">New run</button>
+        </div>
+
+        <div class="config-grid">
+          <div class="field">
+            <label>Run ID</label>
+            <div id="cfg-run-id-badge" class="run-badge">run-init</div>
+          </div>
+          <div class="field">
+            <label>User ID</label>
+            <input type="text" id="cfg-user" value="sujal">
+          </div>
+          <div class="field">
+            <label>Feature</label>
+            <input type="text" id="cfg-feature" value="playground">
+          </div>
+          <div class="field">
+            <label>Model</label>
+            <input type="text" id="cfg-model" list="models-list" value="mock-large">
+            <datalist id="models-list"></datalist>
+          </div>
+          <div class="field">
+            <label>Max Tokens</label>
+            <input type="number" id="cfg-tokens" value="300" min="10" max="4000">
+          </div>
+        </div>
+
+        <div class="field" style="margin-top: 0.25rem;">
+          <label>System Prompt (optional)</label>
+          <input type="text" id="cfg-system" placeholder="e.g. You are a helpful financial assistant...">
+        </div>
+
+        <div class="checkbox-row">
+          <label>
+            <input type="checkbox" id="cfg-remember"> Remember conversation (growing cost)
+          </label>
+          <label>
+            <input type="checkbox" id="cfg-typing" checked> Typing effect
+          </label>
+        </div>
+      </div>
+    </div>
+
+    <!-- RIGHT COLUMN: Verdicts, Session Stats, Rules, Approvals -->
+    <div>
+      <!-- 1. PAUSE BOX (Hidden by default) -->
+      <div class="pause-box" id="pause-box">
+        <div class="pause-title">⏸️ Execution Paused — Cost Threshold Crossed</div>
+        <div style="font-size: 0.85rem; color: #fde68a;" id="pause-reason">Approval required before upstream call.</div>
+        <div class="pause-details">
+          <div><span style="color:var(--text-muted);font-size:0.75rem;">Spent So Far:</span><br><b id="pause-spent">Rs 0.0000</b></div>
+          <div><span style="color:var(--text-muted);font-size:0.75rem;">Call Est:</span><br><b id="pause-est">Rs 0.0000</b></div>
+          <div><span style="color:var(--text-muted);font-size:0.75rem;">Projected:</span><br><b id="pause-projected">Rs 0.0000</b></div>
+        </div>
+        <div style="display: flex; gap: 0.5rem; align-items: center; margin-top: 0.5rem;">
+          <span style="font-size:0.8rem;">New cap Rs:</span>
+          <input type="number" id="pause-new-cap" step="0.5" style="width: 80px; padding: 0.3rem; background: var(--input-bg); border: 1px solid var(--warning); color: #fff; border-radius: 4px;">
+          <button class="btn-success" onclick="resolveApproval(true)">Approve</button>
+          <button class="btn-danger" onclick="resolveApproval(false)">Deny</button>
+        </div>
+      </div>
+
+      <!-- 2. FIREWALL VERDICT CARD -->
+      <div class="card">
+        <div class="card-title">Firewall Verdict</div>
+        <div id="verdict-badge" class="badge-large badge-ALLOW">ALLOW</div>
+        <div class="verdict-reason" id="verdict-reason">Within budget</div>
+
+        <table class="metrics-table">
+          <tr><td>Estimate</td><td id="m-est">Rs 0.00000</td></tr>
+          <tr><td>Projected</td><td id="m-projected">Rs 0.00000</td></tr>
+          <tr><td>Run Cap</td><td id="m-cap">Rs 3.00</td></tr>
+          <tr><td>Actual Cost</td><td id="m-actual">Rs 0.00000</td></tr>
+          <tr><td>Tokens (In / Out)</td><td id="m-tokens">0 / 0</td></tr>
+          <tr><td>Latency</td><td id="m-latency">0 ms</td></tr>
+          <tr><td>Model Used</td><td id="m-model">-</td></tr>
+        </table>
+
+        <div style="display: flex; justify-content: space-between; font-size: 0.75rem; color: var(--text-muted);">
+          <span>Run Budget Utilization</span>
+          <span id="budget-percent">0.0% (Rs 0.0000 / Rs 3.00)</span>
+        </div>
+        <div class="progress-bar-bg">
+          <div class="progress-bar-fill" id="budget-bar"></div>
+        </div>
+      </div>
+
+      <!-- 3. SESSION CARD -->
+      <div class="card">
+        <div class="card-title">Session Overview</div>
+        <div class="counters-grid">
+          <div class="counter-box">
+            <div class="counter-val" id="stat-spent" style="color: #38bdf8;">Rs 0.0000</div>
+            <div class="counter-lbl">Spent</div>
+          </div>
+          <div class="counter-box">
+            <div class="counter-val" id="stat-allowed" style="color: #34d399;">0</div>
+            <div class="counter-lbl">Allowed</div>
+          </div>
+          <div class="counter-box">
+            <div class="counter-val" id="stat-blocked" style="color: #f87171;">0</div>
+            <div class="counter-lbl">Blocked</div>
+          </div>
+          <div class="counter-box">
+            <div class="counter-val" id="stat-saved" style="color: #fbbf24;">Rs 0.0000</div>
+            <div class="counter-lbl">Saved Est.</div>
+          </div>
+        </div>
+
+        <div class="card-title" style="font-size: 0.8rem; margin-top: 0.5rem; margin-bottom: 0.35rem;">Recent Events</div>
+        <div class="events-list" id="events-list">
+          <div style="color: var(--text-muted); text-align: center; padding: 0.5rem;">No events recorded yet.</div>
+        </div>
+      </div>
+
+      <!-- 4. RULES CARD -->
+      <div class="card">
+        <div class="card-title">
+          <span>Policy Rules (Rs)</span>
+          <button onclick="autoSetRules()" style="font-size: 0.7rem; padding: 0.2rem 0.5rem; background: rgba(56, 189, 248, 0.15); border-color: var(--primary); color: #bae6fd;">Auto-set from last call</button>
+        </div>
+
+        <div class="rules-grid">
+          <div class="field"><label>Run Cap</label><input type="number" step="0.1" id="rule-run-cap"></div>
+          <div class="field"><label>Warn At</label><input type="number" step="0.1" id="rule-warn-at"></div>
+          <div class="field"><label>Pause At</label><input type="number" step="0.1" id="rule-pause-at"></div>
+          <div class="field"><label>Downgrade At</label><input type="number" step="0.1" id="rule-downgrade-at"></div>
+          <div class="field"><label>Loop Limit</label><input type="number" step="1" id="rule-loop-limit"></div>
+          <div class="field"><label>User Daily Cap</label><input type="number" step="1" id="rule-user-daily"></div>
+        </div>
+
+        <div style="display: flex; justify-content: flex-end; gap: 0.5rem;">
+          <button class="btn-primary" onclick="savePolicyRules()">Save Rules</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // State
+    let currentRunId = generateRunId();
+    let historyMessages = [];
+    let lastPromptText = "";
+    let lastActualCost = 0.0;
+    let isRequestInFlight = false;
+    let approvalPollInterval = null;
+
+    // Helper: format costs so costs under Rs 0.01 render with 4-5 decimals (never 0.00)
+    function formatCost(val) {
+      const num = parseFloat(val);
+      if (isNaN(num)) return '0.0000';
+      if (num === 0) return '0.0000';
+      if (Math.abs(num) < 0.01) {
+        return num.toFixed(5);
+      }
+      return num.toFixed(4);
+    }
+
+    function generateRunId() {
+      return "run-" + Math.random().toString(36).substring(2, 8);
+    }
+
+    function newRun() {
+      currentRunId = generateRunId();
+      historyMessages = [];
+      lastActualCost = 0.0;
+
+      // Update Run ID badge and header
+      const dispHeader = document.getElementById('display-run-id');
+      if (dispHeader) dispHeader.textContent = currentRunId;
+      const dispBadge = document.getElementById('cfg-run-id-badge');
+      if (dispBadge) dispBadge.textContent = currentRunId;
+
+      // Clear local conversation history and chat bubbles
+      const chatMessages = document.getElementById('chat-messages');
+      if (chatMessages) {
+        chatMessages.innerHTML = `<div class="msg msg-system info">💡 Started new run: <b>${currentRunId}</b>. Local history and bubbles cleared.</div>`;
+      }
+
+      // Hide active PAUSE box and stop polling
+      stopApprovalPolling();
+
+      // Reset Run Budget Bar to 0%
+      const capVal = document.getElementById('rule-run-cap')?.value || '3.0';
+      const bar = document.getElementById('budget-bar');
+      if (bar) bar.style.width = '0%';
+      const bp = document.getElementById('budget-percent');
+      if (bp) bp.textContent = `0.0% (Rs 0.0000 / Rs ${parseFloat(capVal).toFixed(2)})`;
+
+      // Reset verdict card
+      const badge = document.getElementById('verdict-badge');
+      if (badge) {
+        badge.className = 'badge-large badge-ALLOW';
+        badge.textContent = 'READY';
+      }
+      const vr = document.getElementById('verdict-reason');
+      if (vr) vr.textContent = 'New run initialized. Ready for prompt.';
+
+      document.getElementById('m-est').textContent = 'Rs 0.00000';
+      document.getElementById('m-projected').textContent = 'Rs 0.00000';
+      document.getElementById('m-actual').textContent = 'Rs 0.00000';
+      document.getElementById('m-tokens').textContent = '0 / 0';
+      document.getElementById('m-latency').textContent = '0 ms';
+      document.getElementById('m-model').textContent = '-';
+    }
+
+    function appendMessage(role, text, meta) {
+      const container = document.getElementById('chat-messages');
+      const div = document.createElement('div');
+      div.className = `msg msg-${role}`;
+      div.textContent = text;
+      if (meta) {
+        const metaDiv = document.createElement('div');
+        metaDiv.className = 'meta';
+        metaDiv.textContent = meta;
+        div.appendChild(metaDiv);
+      }
+      container.appendChild(div);
+      container.scrollTop = container.scrollHeight;
+      return div;
+    }
+
+    function appendSystemMessage(text, type = 'error') {
+      const container = document.getElementById('chat-messages');
+      const div = document.createElement('div');
+      div.className = `msg msg-system ${type}`;
+      div.textContent = text;
+      container.appendChild(div);
+      container.scrollTop = container.scrollHeight;
+    }
+
+    // Health & Models
+    async function loadHealth() {
+      try {
+        const res = await fetch('/health');
+        const h = await res.json();
+        updateChip('chip-store', `store: ${h.store}`, h.store === 'redis' ? '#10b981' : '#f59e0b');
+        updateChip('chip-db', `db: ${h.db}`, h.db === 'postgres' ? '#10b981' : '#9ca3af');
+        updateChip('chip-telegram', `telegram: ${h.telegram ? 'on' : 'off'}`, h.telegram ? '#10b981' : '#9ca3af');
+      } catch (e) {
+        updateChip('chip-store', 'store: error', '#ef4444');
+      }
+    }
+
+    function updateChip(id, text, dotColor) {
+      const el = document.getElementById(id);
+      if (el) el.innerHTML = `<span class="dot" style="background:${dotColor};"></span> ${text}`;
+    }
+
+    async function loadModels() {
+      try {
+        const res = await fetch('/api/models');
+        const list = await res.json();
+        const dl = document.getElementById('models-list');
+        dl.innerHTML = list.map(m => `<option value="${m.id}">${m.id} (in: ${m.in}, out: ${m.out})</option>`).join('');
+      } catch (e) {}
+    }
+
+    async function loadRules() {
+      try {
+        const res = await fetch('/api/policies');
+        const r = await res.json();
+        document.getElementById('rule-run-cap').value = r.run_cap ?? '';
+        document.getElementById('rule-warn-at').value = r.warn_at ?? '';
+        document.getElementById('rule-pause-at').value = r.pause_at ?? '';
+        document.getElementById('rule-downgrade-at').value = r.downgrade?.at ?? '';
+        document.getElementById('rule-loop-limit').value = r.loop_limit ?? '';
+        document.getElementById('rule-user-daily').value = r.user_daily_cap ?? '';
+      } catch (e) {}
+    }
+
+    async function savePolicyRules() {
+      const payload = {
+        run_cap: document.getElementById('rule-run-cap').value,
+        warn_at: document.getElementById('rule-warn-at').value,
+        pause_at: document.getElementById('rule-pause-at').value,
+        downgrade_at: document.getElementById('rule-downgrade-at').value,
+        loop_limit: document.getElementById('rule-loop-limit').value,
+        user_daily_cap: document.getElementById('rule-user-daily').value,
+      };
+      try {
+        const res = await fetch('/api/policies', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload),
+        });
+        if (res.ok) {
+          appendSystemMessage('Policy rules updated successfully.', 'info');
+        } else {
+          const err = await res.json();
+          alert('Error: ' + err.error);
+        }
+      } catch (e) {
+        alert('Failed to save rules: ' + e.message);
+      }
+    }
+
+    async function autoSetRules() {
+      if (!lastActualCost || lastActualCost <= 0) {
+        alert('Send at least one prompt first so rules can calibrate to real call costs.');
+        return;
+      }
+      const c = lastActualCost;
+      document.getElementById('rule-warn-at').value = (c * 2.5).toFixed(5);
+      document.getElementById('rule-pause-at').value = (c * 4.0).toFixed(5);
+      document.getElementById('rule-run-cap').value = (c * 6.0).toFixed(5);
+      document.getElementById('rule-user-daily').value = (c * 200.0).toFixed(5);
+      await savePolicyRules();
+      appendSystemMessage(`Calibrated rules from call cost Rs ${formatCost(c)}: Warn 2.5x, Pause 4x, Cap 6x.`, 'info');
+    }
+
+    async function loadStats() {
+      try {
+        const [statRes, evRes] = await Promise.all([fetch('/api/stats'), fetch('/api/events?limit=8')]);
+        if (statRes.ok) {
+          const s = await statRes.json();
+          document.getElementById('stat-spent').textContent = `Rs ${formatCost(s.spent)}`;
+          document.getElementById('stat-allowed').textContent = s.calls_allowed;
+          document.getElementById('stat-blocked').textContent = s.blocked;
+          document.getElementById('stat-saved').textContent = `Rs ${formatCost(s.saved_estimate)}`;
+        }
+        if (evRes.ok) {
+          const events = await evRes.json();
+          const list = document.getElementById('events-list');
+          if (events.length === 0) {
+            list.innerHTML = '<div style="color:var(--text-muted);text-align:center;padding:0.5rem;">No events recorded yet.</div>';
+          } else {
+            list.innerHTML = events.map(e => {
+              const actionColor = {
+                'ALLOW': '#34d399', 'WARN': '#fbbf24', 'DOWNGRADE': '#60a5fa',
+                'PAUSE': '#fbbf24', 'BLOCK': '#f87171', 'DENIED': '#f87171',
+                'TIMEOUT': '#f87171', 'UPSTREAM_ERROR': '#c084fc'
+              }[e.action] || '#fff';
+              const costStr = e.actual !== undefined ? `Rs ${formatCost(e.actual)}` : `est Rs ${formatCost(e.est)}`;
+              const runShort = (e.run_id || '').slice(-6);
+              return `
+                <div class="event-row" style="border-left-color:${actionColor}">
+                  <span>${e.time} <b>${e.action}</b> (${runShort})</span>
+                  <span>${costStr}</span>
+                </div>
+              `;
+            }).join('');
+          }
+        }
+      } catch (e) {}
+    }
+
+    // Polling for PAUSE
+    function startApprovalPolling() {
+      if (approvalPollInterval) clearInterval(approvalPollInterval);
+      approvalPollInterval = setInterval(async () => {
+        try {
+          const res = await fetch('/api/approvals');
+          if (res.ok) {
+            const list = await res.json();
+            const pending = list.find(a => a.run_id === currentRunId);
+            const box = document.getElementById('pause-box');
+            if (pending) {
+              box.style.display = 'block';
+              document.getElementById('pause-reason').textContent = pending.reason || 'Paused by policy';
+              document.getElementById('pause-spent').textContent = `Rs ${formatCost(pending.spent)}`;
+              document.getElementById('pause-est').textContent = `Rs ${formatCost(pending.est)}`;
+              document.getElementById('pause-projected').textContent = `Rs ${formatCost(pending.projected)}`;
+              document.getElementById('pause-new-cap').value = (parseFloat(pending.cap || 3.0) * 2.0).toFixed(1);
+            } else {
+              box.style.display = 'none';
+            }
+          }
+        } catch (e) {}
+      }, 700);
+    }
+
+    function stopApprovalPolling() {
+      if (approvalPollInterval) {
+        clearInterval(approvalPollInterval);
+        approvalPollInterval = null;
+      }
+      document.getElementById('pause-box').style.display = 'none';
+    }
+
+    async function resolveApproval(approved) {
+      const newCap = document.getElementById('pause-new-cap').value;
+      const url = approved
+        ? `/api/approvals/${encodeURIComponent(currentRunId)}/approve?new_cap=${newCap}`
+        : `/api/approvals/${encodeURIComponent(currentRunId)}/deny`;
+      try {
+        await fetch(url, { method: 'POST' });
+        document.getElementById('pause-box').style.display = 'none';
+      } catch (e) {
+        alert('Action failed: ' + e.message);
+      }
+    }
+
+    // Core Send
+    async function sendPrompt() {
+      if (isRequestInFlight) return;
+      const promptEl = document.getElementById('prompt-input');
+      const text = promptEl.value.trim();
+      if (!text) return;
+
+      lastPromptText = text;
+      isRequestInFlight = true;
+      document.getElementById('btn-send').disabled = true;
+
+      // Add user message to UI
+      appendMessage('user', text);
+      promptEl.value = '';
+
+      // Prepare payload messages
+      const remember = document.getElementById('cfg-remember').checked;
+      const sysPrompt = document.getElementById('cfg-system').value.trim();
+      let messages = [];
+      if (sysPrompt) messages.push({ role: 'system', content: sysPrompt });
+
+      if (remember) {
+        messages = messages.concat(historyMessages);
+      }
+      messages.push({ role: 'user', content: text });
+
+      const model = document.getElementById('cfg-model').value.trim() || 'mock-large';
+      const maxTokens = parseInt(document.getElementById('cfg-tokens').value) || 300;
+      const user = document.getElementById('cfg-user').value.trim() || 'sujal';
+      const feature = document.getElementById('cfg-feature').value.trim() || 'playground';
+
+      startApprovalPolling();
+
+      try {
+        const resp = await fetch('/v1/chat/completions', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-Run-Id': currentRunId,
+            'X-User-Id': user,
+            'X-Feature': feature,
+          },
+          body: JSON.stringify({ model, messages, max_tokens: maxTokens }),
+        });
+
+        stopApprovalPolling();
+
+        // Read verdict headers
+        const action = resp.headers.get('X-Firewall-Action') || 'UNKNOWN';
+        const reason = resp.headers.get('X-Firewall-Reason') || '';
+        const est = resp.headers.get('X-Firewall-Estimate') || '0';
+        const proj = resp.headers.get('X-Firewall-Projected') || '0';
+        const runTotal = resp.headers.get('X-Firewall-Run-Total') || '0';
+        const cap = resp.headers.get('X-Firewall-Cap') || '3.0';
+        const cost = resp.headers.get('X-Firewall-Cost') || '0';
+        const latency = resp.headers.get('X-Firewall-Latency-Ms') || '0';
+        const effModel = resp.headers.get('X-Firewall-Model') || model;
+
+        updateVerdictUI(action, reason, est, proj, runTotal, cap, cost, latency, effModel);
+
+        if (resp.ok) {
+          const data = await resp.json();
+          const replyText = data.choices?.[0]?.message?.content || 'No reply text';
+          const inTokens = data.usage?.prompt_tokens ?? 0;
+          const outTokens = data.usage?.completion_tokens ?? 0;
+          document.getElementById('m-tokens').textContent = `${inTokens} / ${outTokens}`;
+
+          lastActualCost = parseFloat(cost) || 0.0;
+
+          // Cosmetic typing animation
+          const useTyping = document.getElementById('cfg-typing').checked;
+          const metaStr = `${action} | Rs ${formatCost(cost)} | ${latency}ms${action !== 'ALLOW' ? ' (' + reason + ')' : ''}`;
+
+          if (useTyping) {
+            const bubble = appendMessage('ai', '', metaStr);
+            let idx = 0;
+            const timer = setInterval(() => {
+              idx += 4;
+              bubble.firstChild.textContent = replyText.slice(0, idx);
+              const container = document.getElementById('chat-messages');
+              container.scrollTop = container.scrollHeight;
+              if (idx >= replyText.length) {
+                bubble.firstChild.textContent = replyText;
+                clearInterval(timer);
+              }
+            }, 20);
+          } else {
+            appendMessage('ai', replyText, metaStr);
+          }
+
+          if (remember) {
+            historyMessages.push({ role: 'user', content: text });
+            historyMessages.push({ role: 'assistant', content: replyText });
+          }
+        } else {
+          // Non-OK response (BLOCK 429, DENIED 403, TIMEOUT 408, UPSTREAM 502, etc.)
+          const errData = await resp.json().catch(() => ({}));
+          const errMsg = errData.error?.message || `HTTP ${resp.status}: ${reason || 'Firewall action ' + action}`;
+          appendSystemMessage(`🛡️ ${action}: ${errMsg}`);
+        }
+      } catch (err) {
+        stopApprovalPolling();
+        appendSystemMessage(`⚠️ Connection error: Firewall unreachable (${err.message})`);
+      } finally {
+        isRequestInFlight = false;
+        document.getElementById('btn-send').disabled = false;
+        loadStats();
+      }
+    }
+
+    function updateVerdictUI(action, reason, est, proj, total, cap, cost, lat, model) {
+      const badge = document.getElementById('verdict-badge');
+      badge.className = `badge-large badge-${action}`;
+      badge.textContent = action;
+      document.getElementById('verdict-reason').textContent = reason || 'Evaluated against policy rules.';
+
+      document.getElementById('m-est').textContent = `Rs ${formatCost(est)}`;
+      document.getElementById('m-projected').textContent = `Rs ${formatCost(proj)}`;
+      document.getElementById('m-cap').textContent = cap ? `Rs ${parseFloat(cap).toFixed(2)}` : 'None';
+      document.getElementById('m-actual').textContent = `Rs ${formatCost(cost)}`;
+      document.getElementById('m-latency').textContent = `${lat} ms`;
+      document.getElementById('m-model').textContent = model;
+
+      // Budget bar
+      if (cap && parseFloat(cap) > 0) {
+        const pct = Math.min(100, Math.max(0, (parseFloat(total) / parseFloat(cap)) * 100));
+        const bar = document.getElementById('budget-bar');
+        bar.style.width = pct.toFixed(1) + '%';
+        document.getElementById('budget-percent').textContent = `${pct.toFixed(1)}% (Rs ${formatCost(total)} / Rs ${parseFloat(cap).toFixed(2)})`;
+
+        if (pct < 60) bar.style.backgroundColor = 'var(--success)';
+        else if (pct < 90) bar.style.backgroundColor = 'var(--warning)';
+        else bar.style.backgroundColor = 'var(--danger)';
+      }
+    }
+
+    // Helper buttons
+    function sendSamePrompt() {
+      if (lastPromptText) {
+        document.getElementById('prompt-input').value = lastPromptText;
+        sendPrompt();
+      }
+    }
+
+    async function runAtkaAgent() {
+      if (isRequestInFlight) return;
+      const prompt = "Atka agent loop test: process payment authorization sequence.";
+      document.getElementById('prompt-input').value = prompt;
+      // Temporarily turn off remember conversation
+      const rem = document.getElementById('cfg-remember');
+      const wasRemember = rem.checked;
+      rem.checked = false;
+
+      appendSystemMessage("🚀 Starting Atka agent simulation (sending up to 8 identical requests)...", "info");
+
+      for (let i = 1; i <= 8; i++) {
+        document.getElementById('prompt-input').value = prompt;
+        await sendPrompt();
+        await new Promise(r => setTimeout(r, 250));
+        const badgeText = document.getElementById('verdict-badge').textContent;
+        if (badgeText === 'BLOCK' || badgeText === 'DENIED' || badgeText === 'TIMEOUT') {
+          appendSystemMessage(`🛑 Loop detected and blocked at call ${i}! Atka agent halted.`, "info");
+          break;
+        }
+      }
+      rem.checked = wasRemember;
+    }
+
+    function fillBadaPrompt() {
+      document.getElementById('prompt-input').value = "Deep analytical query with comprehensive background documentation: " + "Here is extensive documentation text describing systemic workflows and financial safety constraints. ".repeat(150);
+    }
+
+    // Keyboard shortcut (Ctrl+Enter)
+    document.getElementById('prompt-input').addEventListener('keydown', (e) => {
+      if (e.ctrlKey && e.key === 'Enter') {
+        e.preventDefault();
+        sendPrompt();
+      }
+    });
+
+    // Initialization
+    loadHealth();
+    loadModels();
+    loadRules();
+    loadStats();
+    document.getElementById('display-run-id').textContent = currentRunId;
+    document.getElementById('cfg-run-id-badge').textContent = currentRunId;
+  </script>
+</body>
+</html>

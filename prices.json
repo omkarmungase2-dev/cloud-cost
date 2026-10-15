@@ -1,0 +1,27 @@
+{
+  "_comment": "Rs per 1000 tokens. Add your model + rate. 'default' is used for unknown models. Rates are estimates, verify with provider.",
+  "mock-large": {
+    "in": 0.5,
+    "out": 1.5
+  },
+  "mock-small": {
+    "in": 0.1,
+    "out": 0.3
+  },
+  "default": {
+    "in": 0.05,
+    "out": 0.15
+  },
+  "llama-3.3-70b-versatile": {
+    "in": 0.04956,
+    "out": 0.06636
+  },
+  "qwen/qwen3.8-27b": {
+    "in": 0.0168,
+    "out": 0.0168
+  },
+  "openai/gpt-oss-20b": {
+    "in": 0.0168,
+    "out": 0.0168
+  }
+}

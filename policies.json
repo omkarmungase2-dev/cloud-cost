@@ -1,0 +1,17 @@
+{
+  "_comment": "Rules in Rs. null = off.",
+  "run_cap": 0.05,
+  "warn_at": 1.0,
+  "pause_at": 0.04,
+  "pause_timeout_seconds": 120,
+  "loop_limit": 3,
+  "max_calls_per_run": 30,
+  "user_daily_cap": 50.0,
+  "downgrade": {
+    "at": null,
+    "map": {
+      "mock-large": "mock-small"
+    }
+  },
+  "allowed_models": {}
+}
